@@ -1,0 +1,39 @@
+[
+  {
+    "owner": "chinadreamer",
+    "proxy": "",
+    "producers": [
+      "eosasia11111",
+      "eosauthority",
+      "eosbeijingbp",
+      "eoscafeblock",
+      "eoscanadacom",
+      "eoscannonchn",
+      "eosdacserver",
+      "eosisgravity",
+      "eosstorebest"
+    ],
+    "staked": 20,
+    "last_vote_weight": "0.00000000000000000",
+    "proxied_vote_weight": "0.00000000000000000",
+    "is_proxy": 0
+  },
+  {
+    "owner": "chinaeosclub",
+    "proxy": "",
+    "producers": [],
+    "staked": 5000,
+    "last_vote_weight": "0.00000000000000000",
+    "proxied_vote_weight": "0.00000000000000000",
+    "is_proxy": 0
+  },
+  {
+    "owner": "chinaeosgame",
+    "proxy": "",
+    "producers": [],
+    "staked": 200,
+    "last_vote_weight": "0.00000000000000000",
+    "proxied_vote_weight": "0.00000000000000000",
+    "is_proxy": 0
+  }
+]
