@@ -6,6 +6,7 @@ import re
 import json
 import sys
 import cgi
+import os
 
 HOST = ''
 PORT = 8000
@@ -24,7 +25,17 @@ sock.bind((HOST, PORT))
 sock.listen(100)
 
 d = {}
-dir = sys.argv[1]
+li = os.listdir(os.getcwd())#列出目录下的所有文件和目录
+li2 = []
+#print 'dirlist:',li
+for i in range(len(li)):
+    if  "vote-data"  in li[i]:
+        li2.append(li[i])
+print 'li2:',li2
+li2.sort();
+dir = li2[-1]
+        
+print 'dir:',dir
 
 
 #infinite loop
