@@ -25,21 +25,12 @@ sock.bind((HOST, PORT))
 sock.listen(100)
 
 d = {}
-li = os.listdir(os.getcwd())#列出目录下的所有文件和目录
 li2 = []
-#print 'dirlist:',li
-for i in range(len(li)):
-    if  "vote-data"  in li[i]:
-        li2.append(li[i])
-print 'li2:',li2
-li2.sort();
-dir = li2[-1]
-        
-print 'dir:',dir
 
 
 #infinite loop
 while True:
+    
     # maximum number of requests waiting
     conn, addr = sock.accept()
     request = conn.recv(1024)
@@ -47,6 +38,17 @@ while True:
 
     print 'Connect by: ', addr
     print 'Request is:\n', request
+    
+    #get  vote-data
+    li = os.listdir(os.getcwd())#列出目录下的所有文件和目录
+    #print 'dirlist:',li
+    for i in range(len(li)):
+        if  "vote-data"  in li[i]:
+            li2.append(li[i])
+            print 'li2:',li2
+    li2.sort();
+    dir = li2[-1]
+    print 'dir:',dir
     
     #deal with GET method
     if method == 'GET':
