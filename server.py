@@ -51,7 +51,7 @@ def search_name(nodename):
                 producers = len(r["producers"])
                 l = {}
                 l["staked"] = stacked
-                l["producers"] = producers
+                l["prod_num"] = producers
                 d[owner] = l
 
 
@@ -62,7 +62,7 @@ def search_name(nodename):
         if int(j[1]["staked"]) > 1000000000:
             #print j[0] + "  " + str(j[1])
             l.append(j)
-    return l
+    return l,len(res)
 
 
 
@@ -105,8 +105,8 @@ class TodoHandler(BaseHTTPRequestHandler):
             name = post_values['node']
             print 'name:',name
             data = {}
-            data['voter'] = search_name(name)
-            data['producer'] = http_client(name)
+            data['voters'],data['voter_num'] = search_name(name)
+            data['producer_info'] = http_client(name)
             send_values = json.dumps(data)
             print 'send_values:',send_values
             self.TODOS.append(send_values)
