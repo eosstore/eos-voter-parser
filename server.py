@@ -6,10 +6,28 @@ import json
 import re
 import sys
 import os
+import requests
 
-d = {}
-li2 = []
+def http_client(nodename):
+    #url = 'https://vote.changshang15.com/v1/chain/get_producers'
+    # url curl --request POST --url https://vote.changshang15.com/v1/chain/get_producers --data '{"limit":"100","json":"true"}'
+    url = 'http://52.221.176.243:8889/v1/chain/get_producers'
+
+    # Make a POST request and read the response
+    headers = {'content-type': 'application/json'}
+    data = json.dumps({"limit":"100","json":"true"})
+    res = requests.post(url, data=data, headers=headers)
+    #print(res.text)
+   
+    res = json.loads(res.text)
+    for it in iter(res['rows']):
+        if it['owner'] == nodename:
+            #print it
+            return it
+
 def search_name(nodename):
+    d = {}
+    li2 = []
     #get  vote-data
     li = os.listdir(os.getcwd())#列出目录下的所有文件和目录
     #print 'dirlist:',li
@@ -30,23 +48,27 @@ def search_name(nodename):
                 # print r["owner"] + "   " + str(r["staked"]) + "  " + r["last_vote_weight"]
                 owner = r["owner"]
                 stacked = int(r["staked"])
-                d[owner] = stacked
+                producers = len(r["producers"])
+                l = {}
+                l["staked"] = stacked
+                l["producers"] = producers
+                d[owner] = l
 
 
     res = sorted(d.items(), key=lambda x: x[1], reverse=True)
-    print 'res:',str(res)
+    #print 'res:',str(res)
+    l = []
     for j in res:
-        if int(j[1]) > 1000000000:
-            print j[0] + "  " + str(j[1])
-    return json.dumps(dict(res))
+        if int(j[1]["staked"]) > 1000000000:
+            #print j[0] + "  " + str(j[1])
+            l.append(j)
+    return l
 
 
 
 class TodoHandler(BaseHTTPRequestHandler):
-#    """A simple TODO server
-
+#    A simple TODO server
 #    which can display and manage todos for you.
-#    """
 
     # Global instance to store todos. You should use a database in reality.
     TODOS = []
@@ -69,12 +91,10 @@ class TodoHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         print 'do_POST'
-#        """Add a new todo
-#
+#        Add a new todo
 #        Only json data is supported, otherwise send a 415 response back.
 #        Append new todo to class variable, and it will be displayed
 #        in following get request
-#        """
         print 'self:',self.headers
         print '\nself.rfile:',self.rfile
         ctype, pdict = cgi.parse_header(self.headers['content-type'])
@@ -82,12 +102,12 @@ class TodoHandler(BaseHTTPRequestHandler):
         if ctype == 'application/json' or ctype == 'application/x-www-form-urlencoded':
             lent = int(self.headers['content-length'])
             post_values = json.loads(self.rfile.read(lent))
-            #values = json.dumps(post_values)
-            print 'values:',post_values
             name = post_values['node']
             print 'name:',name
-
-            send_values = search_name(name)
+            data = {}
+            data['voter'] = search_name(name)
+            data['producer'] = http_client(name)
+            send_values = json.dumps(data)
             print 'send_values:',send_values
             self.TODOS.append(send_values)
             
