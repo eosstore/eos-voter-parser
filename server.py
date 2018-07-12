@@ -35,6 +35,32 @@ def http_client(nodename,option):
             return row[0]['total_producer_vote_weight']
     #print(res.text)
    
+def get_voter_info(votername):
+    d = {}
+    li2 = []
+    #get  vote-data
+    #li = os.listdir(os.getcwd())#列出目录下的所有文件和目录
+    li = os.listdir('/root/eos-voter-parser')#列出目录下的所有文件和目录
+    print 'dirlist:',os.getcwd()
+    for i in range(len(li)):
+        if  "vote-data"  in li[i]:
+            li2.append(li[i])
+            print 'li2:',li2
+    li2.sort();
+    dir = li2[-1]
+    print 'dir:',dir
+    file_num = os.listdir('/root/eos-voter-parser/'+dir)
+    print 'file_num',len(file_num)
+    for i in range(len(file_num)):
+        fname = "list" + str(i + 1) + ".txt"
+        f = open('/root/eos-voter-parser/'+dir + "/" + fname)
+        rows = json.load(f)
+        for r in rows:
+            if r["owner"] == votername:
+                print 'voter',r
+                return r
+  
+       
 
 def search_name(nodename):
     d = {}
@@ -121,14 +147,18 @@ class TodoHandler(BaseHTTPRequestHandler):
         if ctype == 'application/json' or ctype == 'application/x-www-form-urlencoded':
             lent = int(self.headers['content-length'])
             post_values = json.loads(self.rfile.read(lent))
-            name = post_values['node']
-            print 'name:',name
             data = {}
-            data['voters'],total = search_name(name)
-            data['voter_num'] = total[0]
-            data['total_eos'] = total[1]
-            data['producer_info'] = http_client(name,"get_producers")
-            data['percent'] = float(data['producer_info']['total_votes'])/float(http_client(name,"get_table_rows"))
+            if post_values.has_key('node'):
+                name = post_values['node']
+                print 'name:',name
+                data['voters'],total = search_name(name)
+                data['voter_num'] = total[0]
+                data['total_eos'] = total[1]
+                data['producer_info'] = http_client(name,"get_producers")
+                data['percent'] = float(data['producer_info']['total_votes'])/float(http_client(name,"get_table_rows"))
+            elif post_values.has_key('voter'):
+                name = post_values['voter']
+                data = get_voter_info(name)    
             send_values = json.dumps(data)
             print 'send_values:',send_values
             self.TODOS.append(send_values)
