@@ -8,29 +8,41 @@ import sys
 import os
 import requests
 
-def http_client(nodename):
+def http_client(nodename,option):
     #url = 'https://vote.changshang15.com/v1/chain/get_producers'
     # url curl --request POST --url https://vote.changshang15.com/v1/chain/get_producers --data '{"limit":"100","json":"true"}'
-    url = 'http://52.221.176.243:8889/v1/chain/get_producers'
+    url = 'http://127.0.0.1:8889/v1/chain/'
 
+    url = url + option
     # Make a POST request and read the response
     headers = {'content-type': 'application/json'}
-    data = json.dumps({"limit":"100","json":"true"})
-    res = requests.post(url, data=data, headers=headers)
+    if option == "get_producers":
+        data = json.dumps({"limit":"100","json":"true"})
+        res = requests.post(url, data=data, headers=headers)
+        res = json.loads(res.text)
+        for it in iter(res['rows']):
+            if it['owner'] == nodename:
+                #print it
+                return it
+    elif option == "get_table_rows":
+        data = json.dumps({"scope":"eosio","code":"eosio","table":"global","json":"true"})
+        res = requests.post(url, data=data, headers=headers)
+        res = json.loads(res.text)
+        #total_stake = res['total_ram_stake']
+        row = res['rows']
+        if len(row) > 0:
+            #print row[0]
+            return row[0]['total_producer_vote_weight']
     #print(res.text)
    
-    res = json.loads(res.text)
-    for it in iter(res['rows']):
-        if it['owner'] == nodename:
-            #print it
-            return it
 
 def search_name(nodename):
     d = {}
     li2 = []
     #get  vote-data
-    li = os.listdir(os.getcwd())#列出目录下的所有文件和目录
-    #print 'dirlist:',li
+    #li = os.listdir(os.getcwd())#列出目录下的所有文件和目录
+    li = os.listdir('/root/eos-voter-parser')#列出目录下的所有文件和目录
+    print 'dirlist:',os.getcwd()
     for i in range(len(li)):
         if  "vote-data"  in li[i]:
             li2.append(li[i])
@@ -38,10 +50,11 @@ def search_name(nodename):
     li2.sort();
     dir = li2[-1]
     print 'dir:',dir
-
-    for i in range(179):
+    file_num = os.listdir('/root/eos-voter-parser/'+dir)
+    print 'file_num',len(file_num)
+    for i in range(len(file_num)):
         fname = "list" + str(i + 1) + ".txt"
-        f = open(dir + "/" + fname)
+        f = open('/root/eos-voter-parser/'+dir + "/" + fname)
         rows = json.load(f)
         for r in rows:
             if nodename in r['producers']:
@@ -58,11 +71,17 @@ def search_name(nodename):
     res = sorted(d.items(), key=lambda x: x[1], reverse=True)
     #print 'res:',str(res)
     l = []
+    total_eos = 0
     for j in res:
+        global total_eos
+        total_eos += j[1]["staked"]
         if int(j[1]["staked"]) > 1000000000:
             #print j[0] + "  " + str(j[1])
             l.append(j)
-    return l,len(res)
+    total = []
+    total.append(len(res))
+    total.append(total_eos/10000)
+    return l,total
 
 
 
@@ -105,8 +124,11 @@ class TodoHandler(BaseHTTPRequestHandler):
             name = post_values['node']
             print 'name:',name
             data = {}
-            data['voters'],data['voter_num'] = search_name(name)
-            data['producer_info'] = http_client(name)
+            data['voters'],total = search_name(name)
+            data['voter_num'] = total[0]
+            data['total_eos'] = total[1]
+            data['producer_info'] = http_client(name,"get_producers")
+            data['percent'] = float(data['producer_info']['total_votes'])/float(http_client(name,"get_table_rows"))
             send_values = json.dumps(data)
             print 'send_values:',send_values
             self.TODOS.append(send_values)
