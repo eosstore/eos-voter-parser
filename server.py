@@ -17,7 +17,7 @@ def http_client(nodename,option):
     # Make a POST request and read the response
     headers = {'content-type': 'application/json'}
     if option == "get_producers":
-        data = json.dumps({"limit":"100","json":"true"})
+        data = json.dumps({"limit":"230","json":"true"})
         res = requests.post(url, data=data, headers=headers)
         res = json.loads(res.text)
         for it in iter(res['rows']):
@@ -51,16 +51,40 @@ def get_voter_info(votername):
     print 'dir:',dir
     file_num = os.listdir('/root/eos-voter-parser/'+dir)
     print 'file_num',len(file_num)
+
+    #获取voter信息
+    voter = {}
     for i in range(len(file_num)):
         fname = "list" + str(i + 1) + ".txt"
         f = open('/root/eos-voter-parser/'+dir + "/" + fname)
         rows = json.load(f)
         for r in rows:
             if r["owner"] == votername:
-                print 'voter',r
-                return r
-  
-       
+                voter = r
+    pl = voter['producers'] 
+
+    #获取produce信息
+    pl2 = []
+    for name in pl:
+        pd = {}
+        total = 0
+        pd['producer_name'] = name
+        for i in range(len(file_num)):
+            fname = "list" + str(i + 1) + ".txt"
+            f = open('/root/eos-voter-parser/'+dir + "/" + fname)
+            rows = json.load(f)
+            for r in rows:
+                if name in r['producers']:
+                    total += int(r["staked"])            
+        pd['total_eos'] = total/10000
+        staked = http_client(name,"get_producers")
+        #print 'staked',staked
+        if staked > 0:
+            pd['pecent'] = float(staked['total_votes'])/float(http_client(name,"get_table_rows"))
+        pl2.append(pd) 
+    voter['producers'] = pl2
+    return voter
+    
 
 def search_name(nodename):
     d = {}
