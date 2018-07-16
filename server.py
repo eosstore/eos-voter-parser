@@ -7,6 +7,7 @@ import re
 import sys
 import os
 import requests
+import time
 
 def http_client(nodename,option):
     #url = 'https://vote.changshang15.com/v1/chain/get_producers'
@@ -61,6 +62,10 @@ def get_voter_info(votername):
         for r in rows:
             if r["owner"] == votername:
                 voter = r
+                break
+        if len(voter) > 0:
+            break
+    print 'voter',voter
     pl = voter['producers'] 
 
     #获取produce信息
@@ -69,16 +74,18 @@ def get_voter_info(votername):
         pd = {}
         total = 0
         pd['producer_name'] = name
-        for i in range(len(file_num)):
-            fname = "list" + str(i + 1) + ".txt"
-            f = open('/root/eos-voter-parser/'+dir + "/" + fname)
-            rows = json.load(f)
-            for r in rows:
-                if name in r['producers']:
-                    total += int(r["staked"])            
-        pd['total_eos'] = total/10000
+        #for i in range(len(file_num)):
+        #    fname = "list" + str(i + 1) + ".txt"
+        #    f = open('/root/eos-voter-parser/'+dir + "/" + fname)
+        #    rows = json.load(f)
+        #    for r in rows:
+        #        if name in r['producers']:
+        #            total += int(r["staked"])            
+        #pd['total_eos'] = total/10000
         staked = http_client(name,"get_producers")
         #print 'staked',staked
+        weight = float(int( (int(time.time()) - (946684800000 / 1000)) / (24 * 3600 * 7) )/float( 52 ))
+        pd['total_eos'] = float(staked['total_votes']) * pow( 2, weight )
         if staked > 0:
             pd['pecent'] = float(staked['total_votes'])/float(http_client(name,"get_table_rows"))
         pl2.append(pd) 
