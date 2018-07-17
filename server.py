@@ -9,6 +9,8 @@ import os
 import requests
 import time
 
+#data_dir = '/root/voters/'
+data_dir = '/root/eos-voter-parser'
 def http_client(nodename,option):
     #url = 'https://vote.changshang15.com/v1/chain/get_producers'
     # url curl --request POST --url https://vote.changshang15.com/v1/chain/get_producers --data '{"limit":"100","json":"true"}'
@@ -41,8 +43,7 @@ def get_voter_info(votername):
     li2 = []
     #get  vote-data
     #li = os.listdir(os.getcwd())#列出目录下的所有文件和目录
-    li = os.listdir('/root/eos-voter-parser')#列出目录下的所有文件和目录
-    print 'dirlist:',os.getcwd()
+    li = os.listdir(data_dir)#列出目录下的所有文件和目录
     for i in range(len(li)):
         if  "vote-data"  in li[i]:
             li2.append(li[i])
@@ -50,14 +51,14 @@ def get_voter_info(votername):
     li2.sort();
     dir = li2[-1]
     print 'dir:',dir
-    file_num = os.listdir('/root/eos-voter-parser/'+dir)
+    file_num = os.listdir(data_dir+'/'+dir)
     print 'file_num',len(file_num)
 
     #获取voter信息
     voter = {}
     for i in range(len(file_num)):
         fname = "list" + str(i + 1) + ".txt"
-        f = open('/root/eos-voter-parser/'+dir + "/" + fname)
+        f = open(data_dir+'/'+dir + "/" + fname)
         rows = json.load(f)
         for r in rows:
             if r["owner"] == votername:
@@ -84,9 +85,11 @@ def get_voter_info(votername):
         #pd['total_eos'] = total/10000
         staked = http_client(name,"get_producers")
         #print 'staked',staked
-        weight = float(int( (int(time.time()) - (946684800000 / 1000)) / (24 * 3600 * 7) )/float( 52 ))
-        pd['total_eos'] = float(staked['total_votes']) * pow( 2, weight )
         if staked > 0:
+            date = (int(time.time()) - (946684800000 / 1000))
+            weight = float(date/ (24 * 3600 * 7) )/float( 52 )
+            print 'weight',weight,staked['total_votes']
+            pd['total_eos'] = (float(staked['total_votes'])/ pow( 2, weight ))/10000
             pd['pecent'] = float(staked['total_votes'])/float(http_client(name,"get_table_rows"))
         pl2.append(pd) 
     voter['producers'] = pl2
@@ -98,7 +101,7 @@ def search_name(nodename):
     li2 = []
     #get  vote-data
     #li = os.listdir(os.getcwd())#列出目录下的所有文件和目录
-    li = os.listdir('/root/eos-voter-parser')#列出目录下的所有文件和目录
+    li = os.listdir(data_dir)#列出目录下的所有文件和目录
     print 'dirlist:',os.getcwd()
     for i in range(len(li)):
         if  "vote-data"  in li[i]:
@@ -107,11 +110,11 @@ def search_name(nodename):
     li2.sort();
     dir = li2[-1]
     print 'dir:',dir
-    file_num = os.listdir('/root/eos-voter-parser/'+dir)
+    file_num = os.listdir(data_dir+'/'+dir)
     print 'file_num',len(file_num)
     for i in range(len(file_num)):
         fname = "list" + str(i + 1) + ".txt"
-        f = open('/root/eos-voter-parser/'+dir + "/" + fname)
+        f = open(data_dir + '/'+dir + "/" + fname)
         rows = json.load(f)
         for r in rows:
             if nodename in r['producers']:
@@ -152,7 +155,7 @@ class TodoHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         # return all todos
         print 'do_GET'
-
+        return 
         if self.path != '/':
             self.send_error(404, "File not found.")
             return
