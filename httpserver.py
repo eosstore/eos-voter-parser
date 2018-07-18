@@ -150,7 +150,7 @@ def search_name(nodename):
     return l,total
 
 # ------------------------------------------------------------------------------------------
-# ------ Create Account Handler
+# ------ Goto http handler
 # ------------------------------------------------------------------------------------------
 
 class GotoHttpHandler(tornado.web.RequestHandler):
