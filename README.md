@@ -19,7 +19,7 @@ $curl --request POST   --url http://172.0.0.1:8001   --data '{"voter":"<account>
 
 1.如果需要定时执行parser.sh，需要利用Linux的crontab；
 
-   crontab -e 编辑   cronatab -l 查看（详细可以自行查阅crontab相关文档）
+   crontab -e 编辑   crontab -l 查看（详细可以自行查阅crontab相关文档）
    ```
    */15 * * * * /root/eos-voter-parser/./parser.sh  1>>/root/voters/voters.log 2>&1
    ```
