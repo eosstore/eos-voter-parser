@@ -9,8 +9,8 @@ import os
 import requests
 import time
 
-#data_dir = '/root/voters/'
-data_dir = '/root/eos-voter-parser'
+data_dir = '/root/voters'
+#data_dir = '/root/eos-voter-parser'
 def http_client(nodename,option):
     #url = 'https://vote.changshang15.com/v1/chain/get_producers'
     # url curl --request POST --url https://vote.changshang15.com/v1/chain/get_producers --data '{"limit":"100","json":"true"}'
@@ -23,10 +23,13 @@ def http_client(nodename,option):
         data = json.dumps({"limit":"230","json":"true"})
         res = requests.post(url, data=data, headers=headers)
         res = json.loads(res.text)
-        for it in iter(res['rows']):
-            if it['owner'] == nodename:
-                #print it
-                return it
+        if nodename == "all":
+            return res['rows']
+        else:
+            for it in iter(res['rows']):
+                if it['owner'] == nodename:
+                    #print it
+                    return it
     elif option == "get_table_rows":
         data = json.dumps({"scope":"eosio","code":"eosio","table":"global","json":"true"})
         res = requests.post(url, data=data, headers=headers)
@@ -37,25 +40,30 @@ def http_client(nodename,option):
             #print row[0]
             return row[0]['total_producer_vote_weight']
     #print(res.text)
-   
+ 
+voter = {}
 def get_voter_info(votername):
     d = {}
-    li2 = []
+#    li2 = []
     #get  vote-data
     #li = os.listdir(os.getcwd())#列出目录下的所有文件和目录
     li = os.listdir(data_dir)#列出目录下的所有文件和目录
-    for i in range(len(li)):
-        if  "vote-data"  in li[i]:
-            li2.append(li[i])
-            print 'li2:',li2
-    li2.sort();
-    dir = li2[-1]
+    #for i in range(len(li)):
+     #   if  "vote-data"  in li[i]:
+      #      li2.append(li[i])
+            #print 'li2:',li2
+    li.sort();
+    dir = li[-2]
     print 'dir:',dir
     file_num = os.listdir(data_dir+'/'+dir)
     print 'file_num',len(file_num)
-
-    #获取voter信息
+    if len(file_num) < 140:
+        dir = li[-3]
+        print 'dir:',dir
+        file_num = os.listdir(data_dir+'/'+dir)
+        print 'file_num',len(file_num)
     voter = {}
+    #获取voter信息
     for i in range(len(file_num)):
         fname = "list" + str(i + 1) + ".txt"
         f = open(data_dir+'/'+dir + "/" + fname)
@@ -71,6 +79,8 @@ def get_voter_info(votername):
 
     #获取produce信息
     pl2 = []
+    bp = http_client("all","get_producers")
+    print 'bp',bp
     for name in pl:
         pd = {}
         total = 0
@@ -83,14 +93,14 @@ def get_voter_info(votername):
         #        if name in r['producers']:
         #            total += int(r["staked"])            
         #pd['total_eos'] = total/10000
-        staked = http_client(name,"get_producers")
         #print 'staked',staked
-        if staked > 0:
-            date = (int(time.time()) - (946684800000 / 1000))
-            weight = float(date/ (24 * 3600 * 7) )/float( 52 )
-            print 'weight',weight,staked['total_votes']
-            pd['total_eos'] = (float(staked['total_votes'])/ pow( 2, weight ))/10000
-            pd['pecent'] = float(staked['total_votes'])/float(http_client(name,"get_table_rows"))
+        for it in bp:
+            if it['owner'] == name:
+                date = (int(time.time()) - (946684800000 / 1000))
+                weight = float(date/ (24 * 3600 * 7) )/float( 52 )
+                print 'weight',weight,it['total_votes']
+                pd['total_eos'] = (float(it['total_votes'])/ pow( 2, weight ))/10000
+                pd['pecent'] = float(it['total_votes'])/float(http_client(name,"get_table_rows"))
         pl2.append(pd) 
     voter['producers'] = pl2
     return voter
@@ -98,17 +108,17 @@ def get_voter_info(votername):
 
 def search_name(nodename):
     d = {}
-    li2 = []
+#    li2 = []
     #get  vote-data
     #li = os.listdir(os.getcwd())#列出目录下的所有文件和目录
     li = os.listdir(data_dir)#列出目录下的所有文件和目录
-    print 'dirlist:',os.getcwd()
-    for i in range(len(li)):
-        if  "vote-data"  in li[i]:
-            li2.append(li[i])
-            print 'li2:',li2
-    li2.sort();
-    dir = li2[-1]
+    #print 'dirlist:',os.getcwd()
+    #for i in range(len(li)):
+    #    if  "vote-data"  in li[i]:
+    #        li2.append(li[i])
+    #        print 'li2:',li2
+    li.sort();
+    dir = li[-2]
     print 'dir:',dir
     file_num = os.listdir(data_dir+'/'+dir)
     print 'file_num',len(file_num)
