@@ -1,5 +1,11 @@
 # eos-voter-parser
 
+```
+git clone https://github.com/eosstore/eos-voter-parser.git
+mkdir ~/voters
+cd eos-voter-parser/
+```
+
 第一步：生成数据库中的voters信息
 ```
 $./parser.sh 
