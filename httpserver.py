@@ -45,6 +45,15 @@ def http_client(nodename,option):
             #print row[0]
             return row[0]['total_producer_vote_weight']
     #print(res.text)
+
+
+def votes2eos(votes):
+     date = (int(time.time()) - (946684800000 / 1000))
+     weight = float(date/ (24 * 3600 * 7) )/float( 52 )
+     #print 'weight',weight,it['total_votes']
+     return (float(votes)/ pow( 2, weight ))/10000
+ 
+
  
 voter = {}
 def get_voter_info(votername):
@@ -97,10 +106,7 @@ def get_voter_info(votername):
         #print 'staked',staked
         for it in bp:
             if it['owner'] == name:
-                date = (int(time.time()) - (946684800000 / 1000))
-                weight = float(date/ (24 * 3600 * 7) )/float( 52 )
-                #print 'weight',weight,it['total_votes']
-                pd['total_eos'] = (float(it['total_votes'])/ pow( 2, weight ))/10000
+                pd['total_eos'] = int(votes2eos(it['total_votes']))
                 pd['pecent'] = float(it['total_votes'])/float(http_client(name,"get_table_rows"))
         pl2.append(pd) 
     voter['producers'] = pl2
@@ -167,8 +173,9 @@ class GotoHttpHandler(tornado.web.RequestHandler):
             print 'name:',name
             data['voters'],total = search_name(name)
             data['voter_num'] = total[0]
-            data['total_eos'] = total[1]
             data['producer_info'] = http_client(name,"get_producers")
+            #print 'producer_ifno',data['producer_info']
+            data['total_eos'] = int(votes2eos(data['producer_info']['total_votes']))
             data['percent'] = float(data['producer_info']['total_votes'])/float(http_client(name,"get_table_rows"))
         elif post_values.has_key('voter'):
             name = post_values['voter']
