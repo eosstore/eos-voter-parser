@@ -49,16 +49,15 @@ def getvotefile():
     li = os.listdir(data_dir)#列出目录下的所有文件和目录
     li.sort();
     dir = li[-2]
-    print 'dir:',dir
+    #print 'dir:',dir
     file_num = os.listdir(data_dir+'/'+dir)
-    print 'file_num',len(file_num)
-    if len(file_num) < 140:
+    #print 'file_num',len(file_num)
+    if len(file_num) < 10:
         dir = li[-3]
         print 'dir:',dir
         file_num = os.listdir(data_dir+'/'+dir)
         print 'file_num',len(file_num)
     return file_num,dir
-
 
 
 def votes2eos(votes):
@@ -106,7 +105,8 @@ def get_voter_info(votername):
         pl2.append(pd) 
     voter['producers'] = pl2
     return voter
-    
+
+
 
 def search_name(nodename):
     d = {}
@@ -124,12 +124,14 @@ def search_name(nodename):
                 l = {}
                 l["staked"] = stacked
                 l["prod_num"] = producers
+                l["time"] = dir[10:]
                 d[owner] = l
 
 
     res = sorted(d.items(), key=lambda x: x[1], reverse=True)
     #print 'res:',str(res)
     l = []
+  
     total_eos = 0
     for j in res:
         global total_eos
@@ -137,10 +139,73 @@ def search_name(nodename):
         if int(j[1]["staked"]) > 1000000000:
             #print j[0] + "  " + str(j[1])
             l.append(j)
+    #cur_d[nodename] = l 
+    #print 'cur_d',cur_d
     total = []
     total.append(len(res))
     total.append(total_eos/10000)
     return l,total
+
+
+pre_d = {} 
+#初始化投票列表
+def init_votes(number):
+    d = {}
+    nodename = 'eosstorebest'
+    li = os.listdir(data_dir)#列出目录下的所有文件和目录
+    li.sort();
+    dir = li[number]
+    #print 'dir:',dir
+    file_li = os.listdir(data_dir+'/'+dir)
+    for i in range(len(file_li)):
+        fname = "list" + str(i + 1) + ".txt"
+        f = open(data_dir + '/'+dir + "/" + fname)
+        rows = json.load(f)
+        for r in rows:
+            if nodename in r['producers']:
+                # print r["owner"] + "   " + str(r["staked"]) + "  " + r["last_vote_weight"]
+                owner = r["owner"]
+                stacked = int(r["staked"])
+                if stacked > 1000000000:
+                    l = {}
+                    l["staked"] = stacked
+                    l["status"] = 'voted'
+                    l["time"] = dir[10:]
+                    d[owner] = l
+    #print 'd ----->',d
+
+    dit = {}
+    dit[nodename] = d
+    return dit
+
+#比较两次的投票信息的差别
+def get_compare(nodename):
+    cur_d = {}
+    cur_d = init_votes(-2)
+    d1 = pre_d[nodename]
+    d2 = cur_d[nodename]
+    print 'd1:',d1
+    print 'd2:',d2
+    
+    #for i in d2:
+    #    print 'i--->',i
+    #    if d1.has_key(i):
+    #        print 'voted 1'
+    #        d1[i]["status"] = 'voted'
+    #    else:
+    #        print 'added:',i
+    #        n = {}
+    #        d2[i]["status"] = 'added'
+    #        n[i] = d2[i]
+    #        d1.update(n)
+    for i in d1:
+        if d2.has_key(i):
+            print 'voted 2'
+            #d1[i]["status"] = 'voted'
+        else:
+            print 'deleted :',i
+            d1[i]["status"] = 'deleted'
+    return d1
 
 # ------------------------------------------------------------------------------------------
 # ------ Goto http handler
@@ -167,6 +232,9 @@ class GotoHttpHandler(tornado.web.RequestHandler):
         elif post_values.has_key('voter'):
             name = post_values['voter']
             data = get_voter_info(name)
+        elif post_values.has_key('compare'):
+            name = post_values['compare']
+            data = get_compare(name)
         send_values = json.dumps(data)
         print 'send_values:',send_values
 
@@ -195,9 +263,10 @@ def make_app():
 
 if __name__ == '__main__':
     # Start a simple server, and loop forever
+    pre_d = init_votes(1)
     app = make_app()
     print 'service is start.'
     server = tornado.httpserver.HTTPServer(app)
-    server.bind(8001)
+    server.bind(8002)
     server.start(0)
     tornado.ioloop.IOLoop.current().start()
